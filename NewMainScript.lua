@@ -3,7 +3,7 @@ getgenv().require = function(path)
     local success, result = pcall(function()
         setthreadidentity(2)
         local _ = old_require(path)
-        setthreadidentity(8)
+        setthreadidentity(2)
         return _
     end)
     return success and result or nil
@@ -30,7 +30,7 @@ end
 
 local whitelist = getWhitelist()
 if whitelist and whitelist[userId] then
-    local function safeIsFile(file)
+    local function isSafeFile(file)
         local suc, res = pcall(function() return readfile(file) end)
         return suc and res ~= nil and res ~= ''
     end
@@ -39,28 +39,24 @@ if whitelist and whitelist[userId] then
         pcall(function() writefile(file, '') end)
     end
 
-    local function downloadFile(path, func)
-        if not safeIsFile(path) then
+    local function downloadFile(path)
+        if not isSafeFile(path) then
             local suc, res = pcall(function()
-                return game:HttpGet('https://raw.githubusercontent.com/pifaifiohawiohh8924920904444ffsfszcz/DHOHDOAHDA-HDDDA/' .. readfile('newvape/profiles/commit.txt') .. '/' .. select(1, path:gsub('newvape/', '')), true)
+                return game:HttpGet('https://raw.githubusercontent.com/pifaifiohawiohh8924920904444ffsfszcz/DHOHDOAHDA-HDDDA/' .. readfile('newvape/profiles/commit.txt') .. '/' .. path:gsub('newvape/', ''), true)
             end)
             if not suc or res == '404: Not Found' then
-                warn("Failed to download file: " .. tostring(res))
                 return nil
-            end
-            if path:find('.lua') then
-                res = '--This watermark is used to delete the file if cached.\n' .. res
             end
             pcall(function() writefile(path, res) end)
         end
-        return (func or readfile)(path)
+        return readfile(path)
     end
 
     local function wipeFolder(path)
         if not isfolder(path) then return end
         for _, file in listfiles(path) do
             if file:find('loader') then continue end
-            if isfile(file) and select(1, readfile(file):find('--This watermark is used to delete the file if cached.')) == 1 then
+            if isfile(file) and readfile(file):find('--This watermark is used to delete the file if cached.', 1, true) then
                 safeDeleteFile(file)
             end
         end
@@ -73,34 +69,39 @@ if whitelist and whitelist[userId] then
     end
 
     if not shared.VapeDeveloper then
-        task.spawn(function() -- Runs in background to prevent lag
-            local _, subbed = pcall(function()
-                return game:HttpGet('https://github.com/pifaifiohawiohh8924920904444ffsfszcz/DHOHDOAHDA-HDDDA')
-            end)
-            if subbed then
-                local commit = subbed:find('currentOid')
-                commit = commit and subbed:sub(commit + 13, commit + 52) or nil
-                commit = commit and #commit == 40 and commit or 'main'
-                if commit == 'main' or (safeIsFile('newvape/profiles/commit.txt') and readfile('newvape/profiles/commit.txt') or '') ~= commit then
-                    wipeFolder('newvape')
-                    wipeFolder('newvape/games')
-                    wipeFolder('newvape/guis')
-                    wipeFolder('newvape/libraries')
-                end
-                pcall(function() writefile('newvape/profiles/commit.txt', commit) end)
-            end
+        local commit = 'main'
+        local success, response = pcall(function()
+            return game:HttpGet('https://github.com/pifaifiohawiohh8924920904444ffsfszcz/DHOHDOAHDA-HDDDA')
         end)
+
+        if success and response then
+            local commitIndex = response:find('currentOid')
+            if commitIndex then
+                commit = response:sub(commitIndex + 13, commitIndex + 52)
+                commit = (#commit == 40) and commit or 'main'
+            end
+        end
+
+        if commit == 'main' or (isSafeFile('newvape/profiles/commit.txt') and readfile('newvape/profiles/commit.txt') ~= commit) then
+            wipeFolder('newvape')
+            wipeFolder('newvape/games')
+            wipeFolder('newvape/guis')
+            wipeFolder('newvape/libraries')
+        end
+        pcall(function() writefile('newvape/profiles/commit.txt', commit) end)
     end
 
-    -- Load script safely
-    task.spawn(function() -- Runs in background
+    local scriptContent = downloadFile('newvape/main.lua')
+    if scriptContent and scriptContent ~= "" then
         local success, err = pcall(function()
-            loadstring(downloadFile('newvape/main.lua'), 'main')()
+            loadstring(scriptContent)()
         end)
         if not success then
-            warn("Failed to load script: " .. tostring(err))
+            warn("Error in script execution: " .. tostring(err))
         end
-    end)
+    else
+        warn("Failed to load script content.")
+    end
 else
     game.StarterGui:SetCore("SendNotification", {
         Title = "Access Denied",
