@@ -94,20 +94,4 @@ if whitelist and whitelist[userId] then
 
     -- Load script safely
     local success, err = pcall(function()
-        local scriptContent = downloadFile('newvape/main.lua')
-        if scriptContent then
-            loadstring(scriptContent)()
-        else
-            warn("Failed to load main.lua")
-        end
-    end)
-    if not success then
-        warn("Error in script execution: " .. tostring(err))
-    end
-else
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Access Denied",
-        Text = "You are not whitelisted.",
-        Duration = 2
-    })
-end
+        local
