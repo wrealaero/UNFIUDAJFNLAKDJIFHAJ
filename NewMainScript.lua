@@ -1,9 +1,9 @@
 local old_require = require
 getgenv().require = function(path)
     local success, result = pcall(function()
-        setthreadidentity(2)
+        setthreadidentity(2) -- Only set to 2, safer
         local _ = old_require(path)
-        setthreadidentity(2)
+        setthreadidentity(2) -- Reset instead of 8
         return _
     end)
     return success and result or nil
@@ -45,6 +45,7 @@ if whitelist and whitelist[userId] then
                 return game:HttpGet('https://raw.githubusercontent.com/pifaifiohawiohh8924920904444ffsfszcz/DHOHDOAHDA-HDDDA/' .. readfile('newvape/profiles/commit.txt') .. '/' .. path:gsub('newvape/', ''), true)
             end)
             if not suc or res == '404: Not Found' then
+                warn("Failed to download file: " .. tostring(res))
                 return nil
             end
             pcall(function() writefile(path, res) end)
@@ -91,10 +92,13 @@ if whitelist and whitelist[userId] then
         pcall(function() writefile('newvape/profiles/commit.txt', commit) end)
     end
 
+    -- Load script safely
     local success, err = pcall(function()
         local scriptContent = downloadFile('newvape/main.lua')
         if scriptContent then
             loadstring(scriptContent)()
+        else
+            warn("Failed to load main.lua")
         end
     end)
     if not success then
