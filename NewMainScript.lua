@@ -1,9 +1,9 @@
 local old_require = require
 getgenv().require = function(path)
     local thread_identity = syn and syn.set_thread_identity or setthreadidentity
-    if thread_identity then thread_identity(2) end
+    if thread_identity then pcall(function() thread_identity(2) end) end
     local result = old_require(path)
-    if thread_identity then thread_identity(8) end
+    if thread_identity then pcall(function() thread_identity(8) end) end
     return result
 end
 
@@ -27,20 +27,24 @@ end
 
 local whitelist = fetchWhitelist()
 if not (whitelist and whitelist[userId]) then
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "Access Denied",
-        Text = "You are not whitelisted.",
-        Duration = 3
-    })
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Access Denied",
+            Text = "You are not whitelisted.",
+            Duration = 3
+        })
+    end)
     return
 end
 
 local function safeReadFile(path)
+    if not isfile or not readfile then return nil end
     local success, content = pcall(readfile, path)
     return success and content or nil
 end
 
 local function safeWriteFile(path, content)
+    if not writefile then return end
     pcall(writefile, path, content)
 end
 
@@ -49,6 +53,7 @@ local function isFile(path)
 end
 
 local function deleteFile(path)
+    if not writefile then return end
     pcall(function() writefile(path, '') end)
 end
 
@@ -56,10 +61,10 @@ local function downloadFile(path, func)
     if not isFile(path) then
         local success, content = pcall(function()
             return game:HttpGet("https://raw.githubusercontent.com/pifaifiohawiohh8924920904444ffsfszcz/DHOHDOAHDA-HDDDA/" ..
-                safeReadFile("newvape/profiles/commit.txt") .. "/" .. path:gsub("newvape/", ""), true)
+                (safeReadFile("newvape/profiles/commit.txt") or "main") .. "/" .. path:gsub("newvape/", ""), true)
         end)
         
-        if not success or content == "404: Not Found" then
+        if not success or not content or content == "404: Not Found" then
             warn("Failed to download file: " .. tostring(content))
             return nil
         end
@@ -74,17 +79,18 @@ local function downloadFile(path, func)
 end
 
 local function wipeFolder(path)
+    if not isfolder or not listfiles then return end
     if not isfolder(path) then return end
     for _, file in ipairs(listfiles(path)) do
         if file:find("loader") then continue end
-        if isfile(file) and safeReadFile(file):find("-- Cache Control Marker") then
+        if isfile(file) and safeReadFile(file) and safeReadFile(file):find("-- Cache Control Marker") then
             deleteFile(file)
         end
     end
 end
 
 for _, folder in ipairs({"newvape", "newvape/games", "newvape/profiles", "newvape/assets", "newvape/libraries", "newvape/guis"}) do
-    if not isfolder(folder) then
+    if isfolder and not isfolder(folder) then
         pcall(makefolder, folder)
     end
 end
@@ -110,7 +116,12 @@ if not shared.VapeDeveloper then
 end
 
 local success, err = pcall(function()
-    loadstring(downloadFile("newvape/main.lua"), "main")()
+    local scriptData = downloadFile("newvape/main.lua")
+    if scriptData then
+        loadstring(scriptData, "main")()
+    else
+        warn("Failed to load script: File not found.")
+    end
 end)
 
 if not success then
