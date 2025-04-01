@@ -1,3 +1,11 @@
+local old_require = require
+getgenv().require = function(path)
+    setthreadidentity(2)
+    local _ = old_require(path)
+    setthreadidentity(8)
+    return _
+end
+
 local whitelist_url = "https://raw.githubusercontent.com/wrealaero/whitelistcheck/main/whitelist.json"
 local player = game.Players.LocalPlayer
 local userId = tostring(player.UserId)
@@ -21,6 +29,8 @@ end
 
 local whitelist = getWhitelist()
 if whitelist and whitelist[userId] then
+
+    -- Check if file-related functions exist and wrap them safely
     local isfile = isfile or function(file)
         local suc, res = pcall(function() return readfile(file) end)
         return suc and res ~= nil and res ~= ''
@@ -80,6 +90,7 @@ if whitelist and whitelist[userId] then
         end
     end
 
+    -- Load script safely
     local success, err = pcall(function()
         loadstring(downloadFile('newvape/main.lua'), 'main')()
     end)
