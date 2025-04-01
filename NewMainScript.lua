@@ -1,9 +1,9 @@
 local old_require = require
 getgenv().require = function(path)
     local success, result = pcall(function()
-        setthreadidentity(2) -- Only set to 2, safer
+        setthreadidentity(2)
         local _ = old_require(path)
-        setthreadidentity(2) -- Reset instead of 8
+        setthreadidentity(2)
         return _
     end)
     return success and result or nil
@@ -45,7 +45,6 @@ if whitelist and whitelist[userId] then
                 return game:HttpGet('https://raw.githubusercontent.com/pifaifiohawiohh8924920904444ffsfszcz/DHOHDOAHDA-HDDDA/' .. readfile('newvape/profiles/commit.txt') .. '/' .. path:gsub('newvape/', ''), true)
             end)
             if not suc or res == '404: Not Found' then
-                warn("Failed to download file: " .. tostring(res))
                 return nil
             end
             pcall(function() writefile(path, res) end)
@@ -92,6 +91,19 @@ if whitelist and whitelist[userId] then
         pcall(function() writefile('newvape/profiles/commit.txt', commit) end)
     end
 
-    -- Load script safely
     local success, err = pcall(function()
-        local
+        local scriptContent = downloadFile('newvape/main.lua')
+        if scriptContent then
+            loadstring(scriptContent)()
+        end
+    end)
+    if not success then
+        warn("Error in script execution: " .. tostring(err))
+    end
+else
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Access Denied",
+        Text = "You are not whitelisted.",
+        Duration = 2
+    })
+end
