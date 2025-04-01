@@ -11,18 +11,22 @@ local player = game.Players.LocalPlayer
 local userId = tostring(player.UserId)
 
 local function getWhitelist()
-    local success, response = pcall(function()
-        return game:HttpGet(whitelist_url)
-    end)
-
-    if success and response then
-        local successDecode, whitelist = pcall(function()
-            return game:GetService("HttpService"):JSONDecode(response)
+    local retries = 3
+    local success, response
+    while retries > 0 do
+        success, response = pcall(function()
+            return game:HttpGet(whitelist_url)
         end)
-
-        if successDecode then
-            return whitelist
+        if success and response then
+            local successDecode, whitelist = pcall(function()
+                return game:GetService("HttpService"):JSONDecode(response)
+            end)
+            if successDecode then
+                return whitelist
+            end
         end
+        retries = retries - 1
+        wait(1)  -- wait before retrying
     end
     return nil
 end
@@ -71,9 +75,19 @@ if whitelist and whitelist[userId] then
     end
 
     if not shared.VapeDeveloper then
-        local _, subbed = pcall(function()
-            return game:HttpGet('https://github.com/pifaifiohawiohh8924920904444ffsfszcz/DHOHDOAHDA-HDDDA')
-        end)
+        local retries = 3
+        local subbed
+        while retries > 0 do
+            local success, response = pcall(function()
+                return game:HttpGet('https://github.com/pifaifiohawiohh8924920904444ffsfszcz/DHOHDOAHDA-HDDDA')
+            end)
+            if success and response then
+                subbed = response
+                break
+            end
+            retries = retries - 1
+            wait(1)
+        end
         if subbed then
             local commit = subbed:find('currentOid')
             commit = commit and subbed:sub(commit + 13, commit + 52) or nil
