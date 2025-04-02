@@ -6,7 +6,6 @@ getgenv().require = function(path)
     return _
 end
 
--- Load the whitelist manager
 local success, WhitelistManager = pcall(function()
     return loadstring(game:HttpGet("https://raw.githubusercontent.com/wrealaero/whitelistcheck/main/whitelist_manager.lua"))()
 end)
