@@ -48,10 +48,17 @@ local function checkExecutor()
         local suc, res = pcall(function()
             return identifyexecutor()
         end)   
-        local blacklist = {'solara', 'cryptic', 'xeno'}
+        local blacklist = {'solara', 'cryptic'} 
+        local core_blacklist = {'solara'} 
         if suc then
-            for _, v in pairs(blacklist) do
-                if string.find(string.lower(tostring(res)), v) then CheatEngineMode = true end
+            for i,v in pairs(blacklist) do
+                if string.find(string.lower(tostring(res)), v) then 
+                    CheatEngineMode = true
+                end
+            end
+
+            if string.find(string.lower(tostring(res)), 'xeno') then
+                warn("Xeno executor detected. Some features may not work as expected.")
             end
         end
     end
