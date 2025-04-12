@@ -50,7 +50,6 @@ if whitelist and whitelist[userId] then
                 return game:HttpGet('https://raw.githubusercontent.com/pifaifiohawiohh8924920904444ffsfszcz/DHOHDOAHDA-HDDDA/' .. readfile('newvape/profiles/commit.txt') .. '/' .. select(1, path:gsub('newvape/', '')), true)
             end)
             if not suc or res == '404: Not Found' then
-                warn("Failed to download file: " .. tostring(res))
                 return nil
             end
             if path:find('.lua') then
@@ -116,19 +115,8 @@ if whitelist and whitelist[userId] then
             loadstring(downloadFile('newvape/main.lua'), 'main')()
         end)
         if not success then
-            warn("Failed to load script: " .. tostring(err))
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "Error",
-                Text = "Failed to load script: " .. tostring(err),
-                Duration = 5
-            })
             return false
         else
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "Success",
-                Text = "Script loaded successfully!",
-                Duration = 2
-            })
             return true
         end
     end
